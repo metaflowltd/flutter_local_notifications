@@ -114,6 +114,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     private static Notification createNotification(Context context, NotificationDetails notificationDetails) {
+        if (notificationDetails.id == null) return null;
+
         setupNotificationChannel(context, notificationDetails);
         Intent intent = new Intent(context, getMainActivityClass(context));
         intent.setAction(SELECT_NOTIFICATION);
@@ -214,7 +216,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
         for (Iterator<NotificationDetails> it = scheduledNotifications.iterator(); it.hasNext(); ) {
             NotificationDetails notificationDetails = it.next();
-            if (notificationDetails.id.equals(notificationId)) {
+            if (notificationDetails.id == null || notificationDetails.id.equals(notificationId)) {
                 it.remove();
                 break;
             }
@@ -235,6 +237,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     private static void scheduleNotification(Context context, final NotificationDetails notificationDetails, Boolean updateScheduledNotificationsCache) {
+        if (notificationDetails.id == null) return;
+
         Gson gson = buildGson();
         String notificationDetailsJson = gson.toJson(notificationDetails);
         Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
@@ -596,8 +600,9 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             NotificationChannel notificationChannel = notificationManager.getNotificationChannel(notificationDetails.channelId);
             // only create/update the channel when needed/specified. Allow this happen to when channelAction may be null to support cases where notifications had been
             // created on older versions of the plugin where channel management options weren't available back then
-            if ((notificationChannel == null && (notificationDetails.channelAction == null || notificationDetails.channelAction == NotificationChannelAction.CreateIfNotExists)) || (notificationChannel != null && notificationDetails.channelAction == NotificationChannelAction.Update)) {
-                notificationChannel = new NotificationChannel(notificationDetails.channelId, notificationDetails.channelName, notificationDetails.importance);
+            if ((notificationChannel == null && (notificationDetails.channelAction == null || notificationDetails.channelAction == NotificationChannelAction.CreateIfNotExists)) ||
+                    (notificationChannel != null && notificationDetails.channelAction == NotificationChannelAction.Update)) {
+                notificationChannel = new NotificationChannel(notificationDetails.channelId != null ? notificationDetails.channelId : "Default_Channel_Id", notificationDetails.channelName, notificationDetails.importance);
                 notificationChannel.setDescription(notificationDetails.channelDescription);
                 if (notificationDetails.playSound) {
                     AudioAttributes audioAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build();
