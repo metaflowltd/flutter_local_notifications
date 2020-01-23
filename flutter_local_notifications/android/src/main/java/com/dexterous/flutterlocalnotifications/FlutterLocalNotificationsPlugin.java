@@ -652,6 +652,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     static void showNotification(Context context, NotificationDetails notificationDetails) {
+        if (notificationDetails.id == null) return;
+        
         Notification notification = createNotification(context, notificationDetails);
         NotificationManagerCompat notificationManagerCompat = getNotificationManager(context);
         notificationManagerCompat.notify(notificationDetails.id, notification);
