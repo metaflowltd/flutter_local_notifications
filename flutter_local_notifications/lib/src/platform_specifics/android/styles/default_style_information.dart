@@ -1,20 +1,17 @@
 import 'style_information.dart';
 
-/// The default Android notification style
-class DefaultStyleInformation extends StyleInformation {
-  /// Specifies if formatting should be applied to the content through HTML markup
-  bool htmlFormatContent;
+/// The default Android notification style.
+class DefaultStyleInformation implements StyleInformation {
+  const DefaultStyleInformation(
+    this.htmlFormatContent,
+    this.htmlFormatTitle,
+  );
 
-  /// Specifies if formatting should be applied to the title through HTML markup
-  bool htmlFormatTitle;
+  /// Specifies if formatting should be applied to the content through HTML
+  /// markup.
+  final bool htmlFormatContent;
 
-  DefaultStyleInformation(this.htmlFormatContent, this.htmlFormatTitle)
-      : super();
-
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'htmlFormatContent': htmlFormatContent,
-      'htmlFormatTitle': htmlFormatTitle
-    };
-  }
+  /// Specifies if formatting should be applied to the title through HTML
+  /// markup.
+  final bool htmlFormatTitle;
 }

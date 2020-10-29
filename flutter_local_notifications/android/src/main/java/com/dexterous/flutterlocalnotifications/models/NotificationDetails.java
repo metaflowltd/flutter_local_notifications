@@ -1,11 +1,13 @@
 package com.dexterous.flutterlocalnotifications.models;
 
 import android.graphics.Color;
-import android.os.Build;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 
 import com.dexterous.flutterlocalnotifications.BitmapSource;
 import com.dexterous.flutterlocalnotifications.NotificationStyle;
 import com.dexterous.flutterlocalnotifications.RepeatInterval;
+import com.dexterous.flutterlocalnotifications.SoundSource;
 import com.dexterous.flutterlocalnotifications.models.styles.BigPictureStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.BigTextStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.DefaultStyleInformation;
@@ -14,7 +16,6 @@ import com.dexterous.flutterlocalnotifications.models.styles.MessagingStyleInfor
 import com.dexterous.flutterlocalnotifications.models.styles.StyleInformation;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 public class NotificationDetails {
@@ -34,6 +35,7 @@ public class NotificationDetails {
     private static final String PRIORITY = "priority";
     private static final String PLAY_SOUND = "playSound";
     private static final String SOUND = "sound";
+    private static final String SOUND_SOURCE = "soundSource";
     private static final String ENABLE_VIBRATION = "enableVibration";
     private static final String VIBRATION_PATTERN = "vibrationPattern";
     private static final String GROUP_KEY = "groupKey";
@@ -99,6 +101,18 @@ public class NotificationDetails {
     private static final String ALLOW_WHILE_IDLE = "allowWhileIdle";
     private static final String CATEGORY = "category";
     private static final String TIMEOUT_AFTER = "timeoutAfter";
+    private static final String SHOW_WHEN = "showWhen";
+    private static final String WHEN = "when";
+    private static final String ADDITIONAL_FLAGS = "additionalFlags";
+
+    private static final String SCHEDULED_DATE_TIME = "scheduledDateTime";
+    private static final String TIME_ZONE_NAME = "timeZoneName";
+    private static final String SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY = "scheduledNotificationRepeatFrequency";
+    private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
+
+    private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
+    private static final String SHORTCUT_ID = "shortcutId";
+
 
     public Integer id;
     public String title;
@@ -112,6 +126,7 @@ public class NotificationDetails {
     public Integer priority;
     public Boolean playSound;
     public String sound;
+    public SoundSource soundSource;
     public Boolean enableVibration;
     public long[] vibrationPattern;
     public NotificationStyle style;
@@ -145,6 +160,16 @@ public class NotificationDetails {
     public Boolean allowWhileIdle;
     public Long timeoutAfter;
     public String category;
+    public int[] additionalFlags;
+    public Boolean showWhen;
+    public String scheduledDateTime;
+    public String timeZoneName;
+    public ScheduledNotificationRepeatFrequency scheduledNotificationRepeatFrequency;
+    public DateTimeComponents matchDateTimeComponents;
+    public Long when;
+    public Boolean fullScreenIntent;
+    public String shortcutId;
+
 
 
     // Note: this is set on the Android to save details about the icon that should be used when re-hydrating scheduled notifications when a device has been restarted.
@@ -156,6 +181,14 @@ public class NotificationDetails {
         notificationDetails.id = (Integer) arguments.get(ID);
         notificationDetails.title = (String) arguments.get(TITLE);
         notificationDetails.body = (String) arguments.get(BODY);
+        notificationDetails.scheduledDateTime = (String) arguments.get(SCHEDULED_DATE_TIME);
+        notificationDetails.timeZoneName = (String) arguments.get(TIME_ZONE_NAME);
+        if(arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
+            notificationDetails.scheduledNotificationRepeatFrequency = ScheduledNotificationRepeatFrequency.values()[(Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
+        }
+        if(arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
+            notificationDetails.matchDateTimeComponents = DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
+        }
         if (arguments.containsKey(MILLISECONDS_SINCE_EPOCH)) {
             notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
         }
@@ -173,6 +206,12 @@ public class NotificationDetails {
         if (arguments.containsKey(DAY)) {
             notificationDetails.day = (Integer) arguments.get(DAY);
         }
+        
+        readPlatformSpecifics(arguments, notificationDetails);
+        return notificationDetails;
+    }
+
+    private static void readPlatformSpecifics(Map<String, Object> arguments, NotificationDetails notificationDetails) {
         @SuppressWarnings("unchecked")
         Map<String, Object> platformChannelSpecifics = (Map<String, Object>) arguments.get(PLATFORM_SPECIFICS);
         if (platformChannelSpecifics != null) {
@@ -182,52 +221,77 @@ public class NotificationDetails {
             readStyleInformation(notificationDetails, platformChannelSpecifics);
             notificationDetails.icon = (String) platformChannelSpecifics.get(ICON);
             notificationDetails.priority = (Integer) platformChannelSpecifics.get(PRIORITY);
-            notificationDetails.playSound = (Boolean) platformChannelSpecifics.get(PLAY_SOUND);
-            notificationDetails.sound = (String) platformChannelSpecifics.get(SOUND);
+            readSoundInformation(notificationDetails, platformChannelSpecifics);
             notificationDetails.enableVibration = (Boolean) platformChannelSpecifics.get(ENABLE_VIBRATION);
             notificationDetails.vibrationPattern = (long[]) platformChannelSpecifics.get(VIBRATION_PATTERN);
-            notificationDetails.groupKey = (String) platformChannelSpecifics.get(GROUP_KEY);
-            notificationDetails.setAsGroupSummary = (Boolean) platformChannelSpecifics.get(SET_AS_GROUP_SUMMARY);
-            notificationDetails.groupAlertBehavior = (Integer) platformChannelSpecifics.get(GROUP_ALERT_BEHAVIOR);
+            readGroupingInformation(notificationDetails, platformChannelSpecifics);
             notificationDetails.onlyAlertOnce = (Boolean) platformChannelSpecifics.get(ONLY_ALERT_ONCE);
-            notificationDetails.showProgress = (Boolean) platformChannelSpecifics.get(SHOW_PROGRESS);
-            if (platformChannelSpecifics.containsKey(MAX_PROGRESS)) {
-                notificationDetails.maxProgress = (Integer) platformChannelSpecifics.get(MAX_PROGRESS);
-            }
-
-            if (platformChannelSpecifics.containsKey(PROGRESS)) {
-                notificationDetails.progress = (Integer) platformChannelSpecifics.get(PROGRESS);
-            }
-
-            if (platformChannelSpecifics.containsKey(INDETERMINATE)) {
-                notificationDetails.indeterminate = (Boolean) platformChannelSpecifics.get(INDETERMINATE);
-            }
-
+            notificationDetails.showWhen = (Boolean) platformChannelSpecifics.get(SHOW_WHEN);
+            notificationDetails.when = parseLong(platformChannelSpecifics.get(WHEN));
+            readProgressInformation(notificationDetails, platformChannelSpecifics);
             readColor(notificationDetails, platformChannelSpecifics);
             readChannelInformation(notificationDetails, platformChannelSpecifics);
             readLedInformation(notificationDetails, platformChannelSpecifics);
-            notificationDetails.largeIcon = (String) platformChannelSpecifics.get(LARGE_ICON);
-            if (platformChannelSpecifics.containsKey(LARGE_ICON_BITMAP_SOURCE)) {
-                Integer argumentValue = (Integer) platformChannelSpecifics.get(LARGE_ICON_BITMAP_SOURCE);
-                if (argumentValue != null) {
-                    notificationDetails.largeIconBitmapSource = BitmapSource.values()[argumentValue];
-                }
-            }
+            readLargeIconInformation(notificationDetails, platformChannelSpecifics);
             notificationDetails.ticker = (String) platformChannelSpecifics.get(TICKER);
             notificationDetails.visibility = (Integer) platformChannelSpecifics.get(VISIBILITY);
             notificationDetails.allowWhileIdle = (Boolean) platformChannelSpecifics.get(ALLOW_WHILE_IDLE);
-            Object timeoutAfter =  platformChannelSpecifics.get(TIMEOUT_AFTER);
-            if(timeoutAfter != null) {
-                if(timeoutAfter instanceof Integer) {
-                    notificationDetails.timeoutAfter = ((Integer) timeoutAfter).longValue();
-                }
-                else if(timeoutAfter instanceof Long) {
-                    notificationDetails.timeoutAfter = (Long) timeoutAfter;
-                }
-            }
+            notificationDetails.timeoutAfter = parseLong(platformChannelSpecifics.get(TIMEOUT_AFTER));
             notificationDetails.category = (String) platformChannelSpecifics.get(CATEGORY);
+            notificationDetails.fullScreenIntent = (Boolean) platformChannelSpecifics.get((FULL_SCREEN_INTENT));
+            notificationDetails.shortcutId = (String) platformChannelSpecifics.get(SHORTCUT_ID);
+            notificationDetails.additionalFlags = (int[]) platformChannelSpecifics.get(ADDITIONAL_FLAGS);
         }
-        return notificationDetails;
+    }
+
+    private static Long parseLong(Object object) {
+        if (object instanceof Integer) {
+            return ((Integer) object).longValue();
+        }
+        if (object instanceof Long) {
+            return (Long) object;
+        }
+        return null;
+    }
+
+    private static void readProgressInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
+        notificationDetails.showProgress = (Boolean) platformChannelSpecifics.get(SHOW_PROGRESS);
+        if (platformChannelSpecifics.containsKey(MAX_PROGRESS)) {
+            notificationDetails.maxProgress = (Integer) platformChannelSpecifics.get(MAX_PROGRESS);
+        }
+
+        if (platformChannelSpecifics.containsKey(PROGRESS)) {
+            notificationDetails.progress = (Integer) platformChannelSpecifics.get(PROGRESS);
+        }
+
+        if (platformChannelSpecifics.containsKey(INDETERMINATE)) {
+            notificationDetails.indeterminate = (Boolean) platformChannelSpecifics.get(INDETERMINATE);
+        }
+    }
+
+    private static void readLargeIconInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
+        notificationDetails.largeIcon = (String) platformChannelSpecifics.get(LARGE_ICON);
+        if (platformChannelSpecifics.containsKey(LARGE_ICON_BITMAP_SOURCE)) {
+            Integer argumentValue = (Integer) platformChannelSpecifics.get(LARGE_ICON_BITMAP_SOURCE);
+            if (argumentValue != null) {
+                notificationDetails.largeIconBitmapSource = BitmapSource.values()[argumentValue];
+            }
+        }
+    }
+
+    private static void readGroupingInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
+        notificationDetails.groupKey = (String) platformChannelSpecifics.get(GROUP_KEY);
+        notificationDetails.setAsGroupSummary = (Boolean) platformChannelSpecifics.get(SET_AS_GROUP_SUMMARY);
+        notificationDetails.groupAlertBehavior = (Integer) platformChannelSpecifics.get(GROUP_ALERT_BEHAVIOR);
+    }
+
+    private static void readSoundInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
+        notificationDetails.playSound = (Boolean) platformChannelSpecifics.get(PLAY_SOUND);
+        notificationDetails.sound = (String) platformChannelSpecifics.get(SOUND);
+        Integer soundSourceIndex = (Integer)platformChannelSpecifics.get(SOUND_SOURCE);
+        if(soundSourceIndex != null) {
+            notificationDetails.soundSource = SoundSource.values()[soundSourceIndex];
+        }
     }
 
     private static void readColor(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
@@ -254,7 +318,7 @@ public class NotificationDetails {
     }
 
     private static void readChannelInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (VERSION.SDK_INT >= VERSION_CODES.O) {
             notificationDetails.channelId = (String) platformChannelSpecifics.get(CHANNEL_ID);
             notificationDetails.channelName = (String) platformChannelSpecifics.get(CHANNEL_NAME);
             notificationDetails.channelDescription = (String) platformChannelSpecifics.get(CHANNEL_DESCRIPTION);
@@ -311,8 +375,7 @@ public class NotificationDetails {
     private static ArrayList<MessageDetails> readMessages(ArrayList<Map<String, Object>> messages) {
         ArrayList<MessageDetails> result = new ArrayList<>();
         if (messages != null) {
-            for (Iterator<Map<String, Object>> it = messages.iterator(); it.hasNext(); ) {
-                Map<String, Object> messageData = it.next();
+            for (Map<String, Object> messageData : messages) {
                 result.add(new MessageDetails((String) messageData.get(TEXT), (Long) messageData.get(TIMESTAMP), readPersonDetails((Map<String, Object>) messageData.get(PERSON)), (String) messageData.get(DATA_MIME_TYPE), (String) messageData.get(DATA_URI)));
             }
         }

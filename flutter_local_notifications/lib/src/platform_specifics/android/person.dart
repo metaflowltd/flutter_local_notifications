@@ -1,46 +1,31 @@
-import 'enums.dart';
+import 'icon.dart';
 
-/// Details of a person e.g. someone who sent a message
+/// Details of a person e.g. someone who sent a message.
 class Person {
+  const Person({
+    this.bot,
+    this.icon,
+    this.important,
+    this.key,
+    this.name,
+    this.uri,
+  });
+
   /// Whether or not this person represents a machine rather than a human.
   final bool bot;
 
-  /// Icon for this person
-  final String icon;
+  /// Icon for this person.
+  final AndroidIcon icon;
 
-  /// Determines how the icon should be interpreted/resolved e.g. as a drawable
-  final IconSource iconSource;
-
-  /// Whether or not this is an important person
+  /// Whether or not this is an important person.
   final bool important;
 
-  /// Unique identifier for this person
+  /// Unique identifier for this person.
   final String key;
 
-  /// Name of this person
+  /// Name of this person.
   final String name;
 
-  /// Uri for this person
+  /// Uri for this person.
   final String uri;
-
-  Person(
-      {this.bot,
-      this.icon,
-      this.iconSource,
-      this.important,
-      this.key,
-      this.name,
-      this.uri});
-
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'bot': bot,
-      'icon': icon,
-      'iconSource': iconSource?.index,
-      'important': important,
-      'key': key,
-      'name': name,
-      'uri': uri
-    };
-  }
 }
