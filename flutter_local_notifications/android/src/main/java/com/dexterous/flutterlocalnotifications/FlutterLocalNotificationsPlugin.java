@@ -219,19 +219,16 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
 
     @NonNull
     static Gson buildGson() {
-        if(gson == null) {
-            RuntimeTypeAdapterFactory<StyleInformation> styleInformationAdapter =
-                    RuntimeTypeAdapterFactory
-                            .of(StyleInformation.class)
-                            .registerSubtype(DefaultStyleInformation.class)
-                            .registerSubtype(BigTextStyleInformation.class)
-                            .registerSubtype(BigPictureStyleInformation.class)
-                            .registerSubtype(InboxStyleInformation.class)
-                            .registerSubtype(MessagingStyleInformation.class);
-            GsonBuilder builder = new GsonBuilder().registerTypeAdapterFactory(styleInformationAdapter);
-            gson = builder.create();
-        }
-        return gson;
+        RuntimeTypeAdapterFactory<StyleInformation> styleInformationAdapter =
+                RuntimeTypeAdapterFactory
+                        .of(StyleInformation.class)
+                        .registerSubtype(DefaultStyleInformation.class)
+                        .registerSubtype(BigTextStyleInformation.class)
+                        .registerSubtype(BigPictureStyleInformation.class)
+                        .registerSubtype(InboxStyleInformation.class)
+                        .registerSubtype(MessagingStyleInformation.class);
+        GsonBuilder builder = new GsonBuilder().registerTypeAdapterFactory(styleInformationAdapter);
+        return builder.create();
     }
 
     private static ArrayList<NotificationDetails> loadScheduledNotifications(Context context) {
@@ -255,6 +252,13 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(SCHEDULED_NOTIFICATIONS, json);
         editor.commit();
+    }
+
+    /**
+     * Plugin registration.
+     */
+    public static void registerWith(Registrar registrar) {
+        FlutterLocalNotificationsPlugin plugin = new FlutterLocalNotificationsPlugin(registrar);
     }
 
     static void removeNotificationFromCache(Integer notificationId, Context context) {
